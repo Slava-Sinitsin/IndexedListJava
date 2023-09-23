@@ -1,16 +1,19 @@
 package org.example;
 
 import java.io.*;
+import java.util.Objects;
 import java.util.Vector;
 
 public class MyList<T> {
     private static class Node<T> {
         T data;
         Node<T> next;
+        Node<T> prev;
 
         Node(T data) {
             this.data = data;
             this.next = null;
+            this.prev = null;
         }
     }
 
@@ -40,15 +43,12 @@ public class MyList<T> {
                 current = current.next;
             }
             current.next = newNode;
+            newNode.prev = current;
         }
         size++;
-
-        // Добавляем ссылку на каждый N-ый элемент списка в вектор
         if (size % n == 0) {
             vector.add(newNode);
         }
-
-        updateVector();
     }
 
     public T get(int index) {
@@ -62,6 +62,7 @@ public class MyList<T> {
         return current.data;
     }
 
+    @SuppressWarnings({"ReassignedVariable", "DuplicatedCode"})
     public void insert(int index, T data) {
         if (index < 0 || index > size) {
             throw new IndexOutOfBoundsException("Index is out of bounds.");
@@ -69,59 +70,109 @@ public class MyList<T> {
         if (index == 0) {
             Node<T> newNode = new Node<>(data);
             newNode.next = head;
+            if (head != null) {
+                head.prev = newNode;
+            }
             head = newNode;
             size++;
-            updateVector();
+            updateVector(index, "add");
         } else {
-            Node<T> current = head;
-            for (int i = 0; i < index - 1; i++) {
-                current = current.next;
+            Node<T> current;
+            if (vector.size() > 1) {
+                current = vector.get(index / (vector.size() * n));
+                for (int i = vector.size() * n; i < index - 1; i++) {
+                    current = current.next;
+                }
+            } else {
+                current = head;
+                for (int i = 0; i < index - 1; i++) {
+                    current = current.next;
+                }
             }
             Node<T> newNode = new Node<>(data);
             newNode.next = current.next;
+            if (current.next != null) {
+                current.next.prev = newNode;
+            }
             current.next = newNode;
+            newNode.prev = current;
             size++;
-            updateVector();
+            updateVector(index, "add");
         }
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public void remove(int index) {
         if (index < 0 || index >= size) {
             throw new IndexOutOfBoundsException("Index is out of bounds.");
         }
         if (index == 0) {
             head = head.next;
+            if (head != null) {
+                head.prev = null;
+            }
         } else {
-            Node<T> current = head;
-            for (int i = 0; i < index - 1; i++) {
-                current = current.next;
+            Node<T> current;
+            if (vector.size() > 1 && index >= n) {
+                current = vector.get(index / n - 1);
+                for (int i = vector.size() * n - index; i < index - 1; i++) {
+                    current = current.next;
+                }
+            } else {
+                current = head;
+                for (int i = 0; i < index - 1; i++) {
+                    current = current.next;
+                }
             }
             current.next = current.next.next;
+            if (current.next != null) {
+                current.next.prev = current;
+            }
         }
         size--;
-        if (size % n == 0) {
-            vector.remove(vector.size() - 1);
-        }
-        updateVector();
+        updateVector(index, "rem");
     }
 
-    private void updateVector() {
-        vector.clear();
-        Node<T> current = head;
-        int count = 1;
-        while (current != null) {
-            if (count % n == 0) {
-                vector.add(current);
+    private void updateVector(int index, String op) {
+        if (Objects.equals(op, "add")) {
+            for (int i = index / n; i < vector.size(); ++i) {
+                vector.set(i, vector.get(i).prev);
             }
-            current = current.next;
-            count++;
+        }
+        if (Objects.equals(op, "rem")) {
+            for (int i = index / n; i < vector.size(); ++i) {
+                if (vector.get(i).next == null) {
+                    vector.remove(i);
+                    break;
+                } else {
+                    vector.set(i, vector.get(i).next);
+                }
+            }
+        }
+        if (Objects.equals(op, "sort")) {
+            vector.clear();
+            Node<T> current = head;
+            int count = 1;
+            while (current != null) {
+                if (count % n == 0) {
+                    vector.add(current);
+                }
+                current = current.next;
+                count++;
+            }
         }
     }
 
     public void display() {
         Node<T> current = head;
+        System.out.print("null <- ");
         while (current != null) {
-            System.out.print(current.data + " -> ");
+            System.out.print(current.data);
+            if (current.next != null) {
+                System.out.print(" <-> ");
+            } else {
+                System.out.print(" -> ");
+            }
             current = current.next;
         }
         System.out.println("null");
@@ -132,9 +183,10 @@ public class MyList<T> {
         System.out.println();
     }
 
+
     public void mergeSort() {
         head = mergeSort(head);
-        updateVector();
+        updateVector(0, "sort");
     }
 
     private Node<T> mergeSort(Node<T> head) {
@@ -142,19 +194,14 @@ public class MyList<T> {
             return head;
         }
 
-        // Находим середину списка
         Node<T> mid = findMiddle(head);
-
-        // Разделяем список на две части
         Node<T> left = head;
         Node<T> right = mid.next;
         mid.next = null;
 
-        // Рекурсивно сортируем обе части
         left = mergeSort(left);
         right = mergeSort(right);
 
-        // Объединяем две отсортированные части
         return merge(left, right);
     }
 
@@ -179,9 +226,11 @@ public class MyList<T> {
         while (left != null && right != null) {
             if (((Comparable<T>) left.data).compareTo(right.data) <= 0) {
                 current.next = left;
+                left.prev = current;
                 left = left.next;
             } else {
                 current.next = right;
+                right.prev = current;
                 right = right.next;
             }
             current = current.next;
@@ -189,20 +238,19 @@ public class MyList<T> {
 
         if (left != null) {
             current.next = left;
+            left.prev = current;
         } else {
             current.next = right;
+            right.prev = current;
         }
 
         return merged.next;
     }
 
-
-    // Определение интерфейса обратного вызова
     public interface Callback<T> {
         void toDo(T v);
     }
 
-    // Метод forEach, который вызывает метод tоdo для каждого элемента
     public void forEach(Callback<T> callback) {
         Node<T> current = head;
         while (current != null) {
@@ -211,7 +259,6 @@ public class MyList<T> {
         }
     }
 
-    // Сериализация данных в файл в формате JSON
     @SuppressWarnings("CallToPrintStackTrace")
     public void serializeToFile(String filename) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
@@ -240,7 +287,6 @@ public class MyList<T> {
         }
     }
 
-    // Десериализация данных из файла в формате JSON для различных типов
     @SuppressWarnings({"WrapperTypeMayBePrimitive", "unchecked", "CallToPrintStackTrace"})
     public static <E> MyList<E> deserializeFromFile(String filename, Class<E> elementType) {
         MyList<E> myList = null;
@@ -251,7 +297,6 @@ public class MyList<T> {
                 json.append(line);
             }
 
-            // Парсим JSON
             String jsonString = json.toString();
             int index = jsonString.indexOf("\"n\":") + 4;
             int endIndex = jsonString.indexOf(",", index);
@@ -267,7 +312,6 @@ public class MyList<T> {
                     Integer value = Integer.parseInt(element.substring(1, element.length() - 1));
                     myList.add((E) value);
                 } else if (elementType == Point2D.class) {
-                    // Парсим 2D-точку
                     String[] coords = element.substring(2, element.length() - 2).split(";");
                     double x = Double.parseDouble(coords[0].trim());
                     double y = Double.parseDouble(coords[1].trim());
