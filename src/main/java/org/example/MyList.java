@@ -18,8 +18,14 @@ public class MyList<T> {
     }
 
     private Node<T> head;
+    private Node<T> tail; // Добавляем поле tail
     private int size;
     private final Vector<Node<T>> vector;
+
+    public int getN() {
+        return n;
+    }
+
     private final int n;
 
     public int getSize() {
@@ -28,6 +34,7 @@ public class MyList<T> {
 
     public MyList(int n) {
         this.head = null;
+        this.tail = null; // Инициализируем tail как null
         this.size = 0;
         this.vector = new Vector<>();
         this.n = n;
@@ -35,16 +42,14 @@ public class MyList<T> {
 
     public void add(T data) {
         Node<T> newNode = new Node<>(data);
+        // Обновляем tail на новый элемент
         if (head == null) {
             head = newNode;
         } else {
-            Node<T> current = head;
-            while (current.next != null) {
-                current = current.next;
-            }
-            current.next = newNode;
-            newNode.prev = current;
+            tail.next = newNode;
+            newNode.prev = tail;
         }
+        tail = newNode; // Если список пуст, tail указывает на новый элемент
         size++;
         if (size % n == 0) {
             vector.add(newNode);
@@ -62,45 +67,6 @@ public class MyList<T> {
         return current.data;
     }
 
-    @SuppressWarnings({"ReassignedVariable", "DuplicatedCode"})
-    public void insert(int index, T data) {
-        if (index < 0 || index > size) {
-            throw new IndexOutOfBoundsException("Index is out of bounds.");
-        }
-        if (index == 0) {
-            Node<T> newNode = new Node<>(data);
-            newNode.next = head;
-            if (head != null) {
-                head.prev = newNode;
-            }
-            head = newNode;
-            size++;
-            updateVector(index, "add");
-        } else {
-            Node<T> current;
-            if (vector.size() > 1) {
-                current = vector.get(index / (vector.size() * n));
-                for (int i = vector.size() * n; i < index - 1; i++) {
-                    current = current.next;
-                }
-            } else {
-                current = head;
-                for (int i = 0; i < index - 1; i++) {
-                    current = current.next;
-                }
-            }
-            Node<T> newNode = new Node<>(data);
-            newNode.next = current.next;
-            if (current.next != null) {
-                current.next.prev = newNode;
-            }
-            current.next = newNode;
-            newNode.prev = current;
-            size++;
-            updateVector(index, "add");
-        }
-    }
-
     @SuppressWarnings("DuplicatedCode")
     public void remove(int index) {
         if (index < 0 || index >= size) {
@@ -110,6 +76,9 @@ public class MyList<T> {
             head = head.next;
             if (head != null) {
                 head.prev = null;
+            }
+            if (size == 1) {
+                tail = null; // Если удаляем последний элемент, обновляем tail
             }
         } else {
             Node<T> current;
@@ -128,15 +97,62 @@ public class MyList<T> {
             if (current.next != null) {
                 current.next.prev = current;
             }
+            if (current.next == null) {
+                tail = current; // Если удаляем последний элемент, обновляем tail
+            }
         }
         size--;
         updateVector(index, "rem");
     }
 
+    public void insert(int index, T data) {
+        Node<T> newNode = new Node<>(data);
+        if (index < 0 || index > size) {
+            throw new IndexOutOfBoundsException("Index is out of bounds.");
+        }
+        if (index == 0) {
+            newNode.next = head;
+            if (head != null) {
+                head.prev = newNode;
+            }
+            head = newNode;
+            if (size == 0) {
+                tail = newNode; // Если список пуст, tail указывает на новый элемент
+            }
+        } else {
+            Node<T> current;
+            if (vector.size() > 1 && index >= n) {
+                current = vector.get(index / n - 1);
+                for (int i = n * (index / n); i < index; i++) {
+                    current = current.next;
+                }
+            } else {
+                current = head;
+                for (int i = 0; i < index - 1; i++) {
+                    current = current.next;
+                }
+            }
+            newNode.next = current.next;
+            if (current.next != null) {
+                current.next.prev = newNode;
+            }
+            current.next = newNode;
+            newNode.prev = current;
+            if (newNode.next == null) {
+                tail = newNode; // Если новый элемент добавлен в конец списка, обновляем tail
+            }
+        }
+        size++;
+        updateVector(index, "add");
+    }
+
     private void updateVector(int index, String op) {
         if (Objects.equals(op, "add")) {
-            for (int i = index / n; i < vector.size(); ++i) {
+            for (int i = index / n; i < vector.size(); i++) {
                 vector.set(i, vector.get(i).prev);
+            }
+            if (size % n == 0) {
+                vector.add(tail);
             }
         }
         if (Objects.equals(op, "rem")) {
@@ -160,6 +176,13 @@ public class MyList<T> {
                 current = current.next;
                 count++;
             }
+            current = head;
+            current.prev = null;
+            while (current.next != null) {
+                current.next.prev = current;
+                current = current.next;
+            }
+            tail = current;
         }
     }
 
@@ -183,9 +206,35 @@ public class MyList<T> {
         System.out.println();
     }
 
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        Node<T> current = head;
+        builder.append("null <- ");
+        while (current != null) {
+            builder.append(current.data);
+            if (current.next != null) {
+                builder.append(" <-> ");
+            } else {
+                builder.append(" -> ");
+            }
+            current = current.next;
+        }
+        builder.append("null");
+        return builder.toString();
+    }
+
+    public String vectorToString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("N = ").append(n).append(": ");
+        for (Node<T> node : vector) {
+            builder.append("[").append(node.data).append("] ");
+        }
+        return builder.toString();
+    }
 
     public void mergeSort() {
         head = mergeSort(head);
+        tail = findTail(head);
         updateVector(0, "sort");
     }
 
@@ -194,13 +243,12 @@ public class MyList<T> {
             return head;
         }
 
-        Node<T> mid = findMiddle(head);
-        Node<T> left = head;
-        Node<T> right = mid.next;
-        mid.next = null;
+        Node<T> middle = findMiddle(head);
+        Node<T> secondHalf = middle.next;
+        middle.next = null;
 
-        left = mergeSort(left);
-        right = mergeSort(right);
+        Node<T> left = mergeSort(head);
+        Node<T> right = mergeSort(secondHalf);
 
         return merge(left, right);
     }
@@ -209,42 +257,56 @@ public class MyList<T> {
         if (head == null) {
             return null;
         }
+
         Node<T> slow = head;
         Node<T> fast = head;
+
         while (fast.next != null && fast.next.next != null) {
             slow = slow.next;
             fast = fast.next.next;
         }
+
         return slow;
     }
 
-    @SuppressWarnings("unchecked")
     private Node<T> merge(Node<T> left, Node<T> right) {
-        Node<T> merged = new Node<>(null);
-        Node<T> current = merged;
-
-        while (left != null && right != null) {
-            if (((Comparable<T>) left.data).compareTo(right.data) <= 0) {
-                current.next = left;
-                left.prev = current;
-                left = left.next;
-            } else {
-                current.next = right;
-                right.prev = current;
-                right = right.next;
-            }
-            current = current.next;
+        Node<T> result;
+        if (left == null) {
+            return right;
         }
-
-        if (left != null) {
-            current.next = left;
-            left.prev = current;
+        if (right == null) {
+            return left;
+        }
+        if (compare(left.data, right.data) <= 0) {
+            result = left;
+            result.next = merge(left.next, right);
         } else {
-            current.next = right;
-            right.prev = current;
+            result = right;
+            result.next = merge(left, right.next);
+        }
+        return result;
+    }
+
+    private Node<T> findTail(Node<T> head) {
+        if (head == null) {
+            return null;
         }
 
-        return merged.next;
+        while (head.next != null) {
+            head = head.next;
+        }
+
+        return head;
+    }
+
+
+    @SuppressWarnings("unchecked")
+    private int compare(T a, T b) {
+        if (a instanceof Comparable && b instanceof Comparable) {
+            return ((Comparable<T>) a).compareTo(b);
+        } else {
+            throw new IllegalArgumentException("Elements must implement Comparable interface.");
+        }
     }
 
     public interface Callback<T> {

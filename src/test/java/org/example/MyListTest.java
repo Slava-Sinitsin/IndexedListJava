@@ -98,8 +98,8 @@ public class MyListTest {
         for (int i = 0; i < N; ++i) {
             myList.add(i);
         }
-        myList.serializeToFile("intList.json");
-        MyList<Integer> desMyList = MyList.deserializeFromFile("intList.json", Integer.class);
+        myList.serializeToFile("IntegerList.json");
+        MyList<Integer> desMyList = MyList.deserializeFromFile("IntegerList.json", Integer.class);
         for (int i = 0; i < myList.getSize(); ++i) {
             Assertions.assertEquals(myList.get(i), desMyList.get(i));
         }
@@ -201,8 +201,8 @@ public class MyListTest {
         for (int i = 0; i < N; ++i) {
             myList.add(new Point2D(i, i));
         }
-        myList.serializeToFile("pointList.json");
-        MyList<Point2D> desMyList = MyList.deserializeFromFile("pointList.json", Point2D.class);
+        myList.serializeToFile("Point2DList.json");
+        MyList<Point2D> desMyList = MyList.deserializeFromFile("Point2DList.json", Point2D.class);
         for (int i = 0; i < myList.getSize(); ++i) {
             Assertions.assertEquals(myList.get(i).getX(), desMyList.get(i).getX());
             Assertions.assertEquals(myList.get(i).getY(), desMyList.get(i).getY());
