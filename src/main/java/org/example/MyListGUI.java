@@ -441,8 +441,8 @@ public class MyListGUI extends Application {
 
         alert.showAndWait().ifPresent(result -> {
             if (result == ButtonType.OK) {
-                int value = Integer.parseInt(valueInput.getText());
                 try {
+                    int value = Integer.parseInt(valueInput.getText());
                     if (selectedItem.equals("Integer")) {
                         integerList.forEach(v -> {
                             v = v * value;
