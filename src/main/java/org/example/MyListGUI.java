@@ -272,18 +272,16 @@ public class MyListGUI extends Application {
             String fileName = selectedItem + "List.json"; // Генерируем имя файла на основе выбранного типа данных
             if (selectedItem.equals("Integer")) {
                 MyList<Integer> tmpIntList = MyList.deserializeFromFile("IntegerList.json", Integer.class);
-                integerList = MyList.deserializeFromFile("IntegerList.json", Integer.class);
-                N = integerList.getN();
+                N = tmpIntList.getN();
                 nTextField.setText(String.valueOf(N));
-                updateListTextArea(listTextArea, tmpIntList);
                 integerList = tmpIntList;
+                updateListTextArea(listTextArea, integerList);
             } else if (selectedItem.equals("Point2D")) {
                 MyList<Point2D> tmpPoint2DList = MyList.deserializeFromFile("Point2DList.json", Point2D.class);
-                point2DList = MyList.deserializeFromFile("Point2DList.json", Point2D.class);
-                N = integerList.getN();
+                N = tmpPoint2DList.getN();
                 nTextField.setText(String.valueOf(N));
-                updateListTextArea(listTextArea, point2DList);
                 point2DList = tmpPoint2DList;
+                updateListTextArea(listTextArea, point2DList);
             }
 
             // Оповещаем пользователя об успешной загрузке
