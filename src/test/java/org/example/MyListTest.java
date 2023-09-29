@@ -69,6 +69,7 @@ public class MyListTest {
         MyList.Callback<Integer> myCallback = v -> {
             v = v * 2;
             vector.add(v);
+            return v;
         };
         myList.forEach(myCallback);
         for (int i = 0; i < myList.getSize(); ++i) {
@@ -170,6 +171,7 @@ public class MyListTest {
             v.setX(v.getX() * 2);
             v.setY(v.getY() * 2);
             vector.add(v);
+            return v;
         };
         myList.forEach(myCallback);
         for (int i = 0; i < myList.getSize(); ++i) {

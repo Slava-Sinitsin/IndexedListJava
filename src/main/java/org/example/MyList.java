@@ -310,13 +310,14 @@ public class MyList<T> {
     }
 
     public interface Callback<T> {
-        void toDo(T v);
+        T toDo(T v);
     }
 
+    // Метод forEach, который вызывает метод todо для каждого элемента
     public void forEach(Callback<T> callback) {
         Node<T> current = head;
         while (current != null) {
-            callback.toDo(current.data);
+            current.data = callback.toDo(current.data);
             current = current.next;
         }
     }

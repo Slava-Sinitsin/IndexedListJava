@@ -7,6 +7,7 @@ target/
 /.idea
 /out
 /src/main/resources/
+*.docx
 *.iws
 *.iml
 *.ipr

@@ -43,6 +43,8 @@ public class MyListGUI extends Application {
     TextArea listTextArea = new TextArea();
     // Создаем TextArea для вывода вектора
     TextArea vectorTextArea = new TextArea();
+    // Создаем кнопку для умножения элементов списка
+    Button multiplyButton = new Button("Умножить все на число");
 
     public static void main(String[] args) {
         launch(args);
@@ -55,7 +57,7 @@ public class MyListGUI extends Application {
         stage.setScene(scene);
         stage.setTitle("Lab1");
         stage.setWidth(830);
-        stage.setHeight(380);
+        stage.setHeight(420);
 
         // Устанавливаем группу для RadioButton
         integerRadioButton.setToggleGroup(dataTypeGroup);
@@ -66,13 +68,13 @@ public class MyListGUI extends Application {
         listTextArea.setLayoutY(20);
         listTextArea.setEditable(false);
         listTextArea.setWrapText(true);
-        listTextArea.setPrefSize(500, 250);
+        listTextArea.setPrefSize(500, 270);
 
         vectorTextArea.setLayoutX(300);
-        vectorTextArea.setLayoutY(280);
+        vectorTextArea.setLayoutY(300);
         vectorTextArea.setEditable(false);
         vectorTextArea.setWrapText(true);
-        vectorTextArea.setPrefSize(500, 50);
+        vectorTextArea.setPrefSize(500, 70);
 
         // Располагаем элементы в окне
         integerRadioButton.setLayoutX(20);
@@ -96,17 +98,20 @@ public class MyListGUI extends Application {
         addAtIndexButton.setLayoutX(20);
         addAtIndexButton.setLayoutY(140);
 
+        multiplyButton.setLayoutX(20);
+        multiplyButton.setLayoutY(180);
+
         deleteAtIndexButton.setLayoutX(20);
-        deleteAtIndexButton.setLayoutY(180);
+        deleteAtIndexButton.setLayoutY(220);
 
         sortButton.setLayoutX(20);
-        sortButton.setLayoutY(220);
+        sortButton.setLayoutY(260);
 
         saveToFileButton.setLayoutX(20);
-        saveToFileButton.setLayoutY(260);
+        saveToFileButton.setLayoutY(300);
 
         loadFromFileButton.setLayoutX(20);
-        loadFromFileButton.setLayoutY(300);
+        loadFromFileButton.setLayoutY(340);
 
         nTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.trim().isEmpty()) {
@@ -121,12 +126,12 @@ public class MyListGUI extends Application {
                     point2DList = new MyList<>(N);
                 } else {
                     // Обработка случая, когда введено отрицательное значение или ноль
-                    showErrorAlert();
+                    showErrorAlert("Ошибка ввода");
                     nTextField.setText(Integer.toString(N)); // Восстанавливаем предыдущее значение
                 }
             } catch (NumberFormatException e) {
                 // Обработка случая, когда введено нечисловое значение
-                showErrorAlert();
+                showErrorAlert("Ошибка ввода");
                 nTextField.setText(Integer.toString(N)); // Восстанавливаем предыдущее значение
             }
         });
@@ -235,6 +240,18 @@ public class MyListGUI extends Application {
             }
         });
 
+        // Добавляем слушатель для кнопки "Умножить все элементы на число"
+        multiplyButton.setOnAction(e -> {
+            String selectedItem = ((RadioButton) dataTypeGroup.getSelectedToggle()).getText();
+            if (selectedItem.equals("Integer") && integerList.getSize() != 0) {
+                showMultiplyDialog(selectedItem);
+            } else if (selectedItem.equals("Point2D") && point2DList.getSize() != 0) {
+                showMultiplyDialog(selectedItem);
+            } else {
+                showErrorAlert("Список пуст");
+            }
+        });
+
         // Добавляем слушатель для кнопки "Сортировать"
         sortButton.setOnAction(e -> {
             String selectedItem = ((RadioButton) dataTypeGroup.getSelectedToggle()).getText();
@@ -292,7 +309,7 @@ public class MyListGUI extends Application {
             alert.showAndWait();
         });
 
-        group.getChildren().addAll(integerRadioButton, point2DRadioButton, nTextField, nText, addButton, randomButton, addAtIndexButton, deleteAtIndexButton, sortButton, listTextArea, vectorTextArea, saveToFileButton, loadFromFileButton);
+        group.getChildren().addAll(integerRadioButton, point2DRadioButton, nTextField, nText, addButton, randomButton, addAtIndexButton, multiplyButton, deleteAtIndexButton, sortButton, listTextArea, vectorTextArea, saveToFileButton, loadFromFileButton);
 
         stage.show();
     }
@@ -355,7 +372,7 @@ public class MyListGUI extends Application {
                         }
                     }
                 } catch (NumberFormatException e) {
-                    showErrorAlert();
+                    showErrorAlert("Ошибка ввода");
                 }
             }
         });
@@ -395,17 +412,63 @@ public class MyListGUI extends Application {
                         updateListTextArea(listTextArea, point2DList);
                     }
                 } catch (NumberFormatException e) {
-                    showErrorAlert();
+                    showErrorAlert("Ошибка ввода");
                 }
             }
         });
     }
 
-    private void showErrorAlert() {
-        Alert alert = new Alert(AlertType.ERROR);
-        alert.setTitle("Ошибка ввода");
+    private void showMultiplyDialog(String selectedItem) {
+        Alert alert = new Alert(AlertType.CONFIRMATION);
+        alert.setTitle("Умножить все на число");
         alert.setHeaderText(null);
-        alert.setContentText("Ошибка ввода");
+        alert.setContentText("Умножить на:");
+
+        // Создаем поле для ввода индекса
+        TextField valueInput = new TextField();
+        valueInput.setMaxSize(50, 20);
+
+        GridPane grid = new GridPane();
+        grid.addRow(0, new Text(""));
+        grid.addRow(1, new Text("           Умножить на:    "), valueInput);
+        grid.getRowConstraints().forEach(constraint -> {
+            RowConstraints rowConstraints = new RowConstraints();
+            rowConstraints.setMinHeight(30);
+            constraint.setPrefHeight(30);
+        });
+
+        alert.getDialogPane().setContent(grid);
+
+        alert.showAndWait().ifPresent(result -> {
+            if (result == ButtonType.OK) {
+                int value = Integer.parseInt(valueInput.getText());
+                try {
+                    if (selectedItem.equals("Integer")) {
+                        integerList.forEach(v -> {
+                            v = v * value;
+                            return v;
+                        });
+                        updateListTextArea(listTextArea, integerList);
+                    } else if (selectedItem.equals("Point2D")) {
+                        point2DList.forEach(v -> {
+                            v.setX(v.getX() * value);
+                            v.setY(v.getY() * value);
+                            return v;
+                        });
+                        updateListTextArea(listTextArea, point2DList);
+                    }
+                } catch (NumberFormatException e) {
+                    showErrorAlert("Ошибка ввода");
+                }
+            }
+        });
+    }
+
+    private void showErrorAlert(String message) {
+        Alert alert = new Alert(AlertType.ERROR);
+        alert.setTitle("Ошибка!");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
         alert.showAndWait();
     }
 }
